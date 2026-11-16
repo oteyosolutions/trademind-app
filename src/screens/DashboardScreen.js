@@ -5,6 +5,7 @@ import { useApp } from "../context/AppContext";
 import { fmtPct, fmtPF, fmtR } from "../utils/format";
 import { fmtMoney } from "../utils/risk";
 import { Stat } from "../components/ui";
+import MarketClock from "../components/MarketClock";
 
 export default function DashboardScreen() {
   const { stats, equity, setTab, newAlertCount, backupDue, backupAge, settings, moneyTotal, myTrades, currentRisk } = useApp();
@@ -35,8 +36,10 @@ export default function DashboardScreen() {
             <Text style={styles.linkText}>Set your account balance and risk % →</Text>
           </TouchableOpacity>
         )}
-        <Text style={[styles.demo, { marginTop: 10 }]}>NO LIVE BROKER CONNECTED</Text>
+
       </View>
+
+      <MarketClock />
 
       {backupDue && (
         <TouchableOpacity style={styles.warnCard} onPress={() => setTab("Settings")}>

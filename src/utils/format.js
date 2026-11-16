@@ -32,9 +32,16 @@ export function daysSince(iso) {
 }
 
 export function normalizeScannerUrl(text) {
-  let url = String(text || "").trim().replace(/\/+$/, "");
-  if (!url) return "";
-  if (!/^https?:\/\//i.test(url)) url = "http://" + url;
-  if (!/:\d+$/.test(url)) url = url + ":8765";
-  return url;
+  // Accepts any form: "192.168.1.20", "192.168.1.20:8765", "http://192.168.1.20:8765/alerts",
+  // the bot port (8766) or a pasted address with spaces - always returns http://HOST:8765
+  let t = String(text || "").trim().replace(/\s+/g, "");
+  if (!t) return "";
+  t = t.replace(/^[a-z]+:?\/*/i, (m) => (/^https?:?\/*$/i.test(m) ? "" : m)); // drop http:// (even typos like http//)
+  const hostPort = t.split(/[/?#]/)[0];
+  const match = hostPort.match(/^([^:]+)(?::(\d+))?/);
+  if (!match || !match[1]) return "";
+  const host = match[1];
+  let port = match[2] || "8765";
+  if (port === "8766") port = "8765"; // bot port typed by mistake
+  return `http://${host}:${port}`;
 }

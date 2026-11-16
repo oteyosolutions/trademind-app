@@ -77,6 +77,7 @@ export function AppProvider({ children }) {
 
   // Scanner alerts
   const [scannerUrl, setScannerUrl] = useState("");
+  const [mt5ImportStatus, setMt5ImportStatus] = useState({ at: null, added: 0, error: "" });
   const [scannerInput, setScannerInput] = useState("");
   const [alertsData, setAlertsData] = useState({ alerts: [], scanner: null });
   const [alertsError, setAlertsError] = useState(null);
@@ -551,13 +552,14 @@ export function AppProvider({ children }) {
 
   /* ---------------- MT5 history import ---------------- */
 
-  async function importMt5FromPc() {
+  /** silent = the automatic import every 10 minutes while connected to the PC (no pop-ups). */
+  async function importMt5FromPc(silent = false) {
     if (!isPro) {
-      setTab("Pro");
+      if (!silent) setTab("Pro");
       return;
     }
     if (!scannerUrl) {
-      Alert.alert("MT5 import", "Connect to your PC scanner first (Alerts tab), then try again.");
+      if (!silent) Alert.alert("MT5 import", "Connect to your PC scanner first (Alerts tab), then try again.");
       return;
     }
     try {
@@ -567,18 +569,52 @@ export function AppProvider({ children }) {
       clearTimeout(timer);
       const json = await res.json();
       if (json.error) throw new Error(json.error);
-      const incoming = Array.isArray(json.trades) ? json.trades : [];
-      const { merged, addedCount } = mergeTrades(tradesRef.current, incoming);
+      // charts drawn by the bot on the PC (served by the scanner on your Wi-Fi)
+      const withCharts = (t) => {
+        const c = t.autoCharts || {};
+        const out = { ...t };
+        if (c.open && !out.chartBefore) out.chartBefore = `${scannerUrl}/${c.open}`;
+        if (c.close && !out.chartAfter) out.chartAfter = `${scannerUrl}/${c.close}`;
+        delete out.autoCharts;
+        return out;
+      };
+      const incoming = (Array.isArray(json.trades) ? json.trades : []).map(withCharts);
+      const byId = new Map(incoming.map((t) => [t.id, t]));
+      // trades imported before their close chart existed get it now (never overwrites your own links)
+      const existing = tradesRef.current.map((t) => {
+        const n = byId.get(t.id);
+        if (!n) return t;
+        const patch = {};
+        if (!t.chartBefore && n.chartBefore) patch.chartBefore = n.chartBefore;
+        if (!t.chartAfter && n.chartAfter) patch.chartAfter = n.chartAfter;
+        return Object.keys(patch).length ? { ...t, ...patch } : t;
+      });
+      const { merged, addedCount } = mergeTrades(existing, incoming);
       setTrades(merged);
+      setMt5ImportStatus({ at: new Date().toISOString(), added: addedCount, error: "" });
+      if (silent) return;
       Alert.alert(
         "MT5 import",
         `${addedCount} new trade(s) imported from MT5 (${incoming.length - addedCount} already in your journal).` +
           (json.note ? `\n\n${json.note}` : "")
       );
     } catch (error) {
+      setMt5ImportStatus((s0) => ({ ...s0, error: "PC not reachable" }));
+      if (silent) return;
       Alert.alert("MT5 import failed", "Could not get your MT5 history from the PC scanner. Make sure scan_signals.py (version 5) is running.");
     }
   }
+
+  // automatic MT5 import (bot trades, manual trades, charts) while the app can reach the PC
+  useEffect(() => {
+    if (!scannerUrl || !isPro) return undefined;
+    const first = setTimeout(() => importMt5FromPc(true), 4000);
+    const id = setInterval(() => importMt5FromPc(true), 10 * 60 * 1000);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+    };
+  }, [scannerUrl, isPro]);
 
   function updateSettings(patch) {
     setSettings((current) => ({ ...current, ...patch }));
@@ -974,6 +1010,15 @@ export function AppProvider({ children }) {
       setScannerUrl(url);
       AsyncStorage.setItem(SCANNER_URL_KEY, url).catch(() => {});
       Alert.alert("Connected", "Alerts from your scanner will appear here.");
+    } else {
+      Alert.alert(
+        "Could not connect",
+        `The app could not reach ${url}.\n\n` +
+          "1. Is scan_signals.py running on the PC?\n" +
+          "2. Is the phone on the SAME Wi-Fi as the PC (mobile data off)?\n" +
+          "3. Is the address the one shown in the scanner window?\n" +
+          "4. Windows Firewall may be blocking it - allow ports 8765 and 8766."
+      );
     }
   }
 
@@ -1152,6 +1197,7 @@ export function AppProvider({ children }) {
     cloudReady, user, authSession, authBusy, signUp, signIn, signOut, resetPassword, deleteAccount,
     syncNow, syncStatus, syncState, allAlerts, cloudAlerts, fetchCloudAlerts, enablePush, pushStatus,
     importMt5FromPc,
+    mt5ImportStatus,
     // pro
     isPro, proStatus, proPackages, proBusy, buyPro, restorePro, purchasesAvailable: purchasesSupported(),
   };

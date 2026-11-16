@@ -6,8 +6,8 @@
  */
 
 // Supabase (login + cloud sync + cloud alerts): supabase.com -> your project -> Settings -> API
-export const SUPABASE_URL = "";        // e.g. "https://abcdxyz.supabase.co"
-export const SUPABASE_ANON_KEY = "";   // the "anon public" key (safe to put in the app)
+export const SUPABASE_URL = "https://iyhliwhzbswcjjfhirwh.supabase.co";
+export const SUPABASE_ANON_KEY = "sb_publishable_uPknuBZZ0J4RwFdig4_inw_HTIFzAm0";
 
 // RevenueCat (Pro subscriptions through Google Play Billing): app.revenuecat.com -> API keys
 export const REVENUECAT_ANDROID_KEY = ""; // starts with "goog_"
@@ -18,8 +18,8 @@ export const PRO_ENTITLEMENT = "pro";      // entitlement identifier you create 
 export const PRO_FREE_DURING_BETA = true;
 
 // Links shown in the app (host these pages, e.g. on GitHub Pages)
-export const PRIVACY_URL = "";           // e.g. "https://yourname.github.io/trademind/privacy"
-export const TERMS_URL = "";
-export const SUPPORT_EMAIL = "";         // e.g. "support@yourdomain.com"
+export const PRIVACY_URL = "https://oteyosolutions.github.io/trademind/privacy.html";
+export const TERMS_URL = "https://oteyosolutions.github.io/trademind/terms.html";
+export const SUPPORT_EMAIL = "PUT-YOUR-EMAIL-HERE";        // e.g. "support@yourdomain.com"
 
 export const cloudConfigured = () => SUPABASE_URL.startsWith("https://") && SUPABASE_ANON_KEY.length > 20;

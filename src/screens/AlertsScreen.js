@@ -6,11 +6,14 @@ import { useApp } from "../context/AppContext";
 import { timeAgo } from "../utils/format";
 import { Choice, Field } from "../components/ui";
 import AlertCard from "../components/AlertCard";
+import BotPanel from "../components/BotPanel";
+import ForwardTestCard from "../components/ForwardTestCard";
 
 export default function AlertsScreen() {
   const {
     alertsData, allAlerts, user, alertStatus, alertFilter, setAlertFilter, scannerInput, setScannerInput,
     connectScanner, scannerUrl, alertsError, alertsLoading, lastFetch, fetchAlerts, fetchCloudAlerts,
+    importMt5FromPc, mt5ImportStatus, settings, updateSettings,
   } = useApp();
 
   useEffect(() => {
@@ -34,6 +37,39 @@ export default function AlertsScreen() {
     }
     if (scanner && scanner.last_check) statusLine += ` · scanner checked ${timeAgo(scanner.last_check)}`;
     if (lastFetch) statusLine += ` · updated ${lastFetch.toLocaleTimeString()}`;
+  }
+
+  // Play Store users without the PC companion see an explainer instead of PC connection screens
+  const desktop = settings.desktopMode || !!scannerUrl;
+  if (!desktop) {
+    return (
+      <>
+        <Text style={styles.pageTitle}>TradeMind Desktop</Text>
+        <Text style={styles.muted}>
+          An optional companion for your Windows PC that works with MetaTrader 5.
+        </Text>
+        <View style={styles.calculator}>
+          <Text style={styles.menuTitle}>What it adds</Text>
+          {[
+            "Live setup alerts from the SMC/ICT scanner",
+            "Your closed MT5 trades imported into the journal automatically, with charts",
+            "Optional rule-based auto-trading with a risk guardian, prop-firm limits and a news filter",
+            "Trade copier and TradingView alerts",
+          ].map((line) => (
+            <Text key={line} style={[styles.small, { marginTop: 6, color: C.text }]}>• {line}</Text>
+          ))}
+          <Text style={[styles.small, { marginTop: 10 }]}>
+            Coming soon for everyone. Trading carries a high risk of loss - automated trading too.
+          </Text>
+        </View>
+        <View style={styles.calculator}>
+          <Text style={styles.menuTitle}>Already running TradeMind Desktop?</Text>
+          <TouchableOpacity style={styles.primaryButton} onPress={() => updateSettings({ desktopMode: true })}>
+            <Text style={styles.primaryText}>Connect my PC</Text>
+          </TouchableOpacity>
+        </View>
+      </>
+    );
   }
 
   return (
@@ -76,6 +112,29 @@ export default function AlertsScreen() {
           </TouchableOpacity>
         ) : null}
       </View>
+
+      <BotPanel />
+      <ForwardTestCard />
+      {!!scannerUrl && (
+        <View style={styles.calculator}>
+          <View style={styles.tradeRow}>
+            <Text style={styles.menuTitle}>MT5 trades → journal</Text>
+            <TouchableOpacity onPress={() => importMt5FromPc(false)}>
+              <Text style={[styles.small, { color: C.blue }]}>Import now</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.small}>
+            Your closed MT5 trades (bot and manual, with charts) are added to the journal automatically every
+            10 minutes while the app can reach your PC.
+          </Text>
+          {mt5ImportStatus && mt5ImportStatus.at ? (
+            <Text style={[styles.small, { color: mt5ImportStatus.error ? C.orange : C.green }]}>
+              Last import {new Date(mt5ImportStatus.at).toLocaleTimeString()} · {mt5ImportStatus.added} new
+              {mt5ImportStatus.error ? ` · ${mt5ImportStatus.error}` : ""}
+            </Text>
+          ) : null}
+        </View>
+      )}
 
       <View style={[styles.choices, { marginTop: 16 }]}>
         {ALERT_FILTERS.map((item) => {

@@ -12,6 +12,7 @@ import { Chips, Choice, Stat } from "../components/ui";
 import CalendarHeatmap from "../components/CalendarHeatmap";
 import RDistribution from "../components/RDistribution";
 import ProLock from "../components/ProLock";
+import CoachCard from "../components/CoachCard";
 import EquityCurve from "../components/EquityCurve";
 import { BreakdownTable, RTable, StatsGrid } from "../components/Tables";
 import { DatasetSwitch } from "./JournalScreen";
@@ -27,7 +28,8 @@ const BREAKDOWNS = {
     tr.planFollowed === true ? "Followed plan" : tr.planFollowed === false ? "Broke plan" : "Not recorded",
   Mistakes: null, // several per trade - handled separately
   Checklist: checklistGrade,
-  Source: (tr) => (tr.alertId ? "From alert" : "Manual"),
+  Source: (tr) =>
+    tr.source === "bot" ? "Auto bot" : tr.source === "mt5" ? "MT5 (manual)" : tr.alertId ? "From alert" : "Manual",
 };
 
 const FREE_BREAKDOWNS = ["Pair", "Session", "Setup", "Checklist", "Source"];
@@ -274,6 +276,7 @@ export default function AnalysisScreen() {
           : "Measure what is working in your trading."}
       </Text>
       <DatasetSwitch />
+      {dataset === "mine" ? <CoachCard trades={datasetTrades} /> : null}
       <View style={[styles.choices, { marginTop: 14 }]}>
         {["Analytics", "Reports"].map((item) => (
           <Choice key={item} label={item} selected={analysisView === item} onPress={() => setAnalysisView(item)} />

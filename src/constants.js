@@ -4,7 +4,7 @@ export const SCANNER_URL_KEY = "@trademind_ict_scanner_url_v1";
 export const ALERT_STATUS_KEY = "@trademind_ict_alert_status_v1";
 export const LAST_BACKUP_KEY = "@trademind_ict_last_backup_v1";
 
-export const APP_VERSION = "5.0";
+export const APP_VERSION = "5.1";
 export const BACKUP_VERSION = 1;
 export const BACKUP_REMINDER_DAYS = 7;
 
@@ -53,6 +53,7 @@ export const DEFAULT_SETTINGS = {
   riskPercent: "1",       // risk per trade in %
   usdToAccount: "1",      // 1 USD = ? account currency (1 for USD accounts)
   onboarded: false,
+  desktopMode: false,     // true = this phone is paired with TradeMind Desktop (PC scanner + bot)
 };
 export const CURRENCIES = ["USD", "EUR", "GBP", "KES"];
 

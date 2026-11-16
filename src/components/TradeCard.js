@@ -15,6 +15,11 @@ function openLink(url) {
   Linking.openURL(full).catch(() => {});
 }
 
+/** Charts saved by the TradeMind bot (PNG from the PC scanner) are shown as pictures. */
+function isChartImage(uri) {
+  return typeof uri === "string" && /\/charts\/\d+_(open|close)\.png$/.test(uri);
+}
+
 export default function TradeCard({ trade }) {
   const {
     closingTradeId, setClosingTradeId, exitPrice, setExitPrice, closeTrade, deleteTrade, startEdit,
@@ -23,7 +28,15 @@ export default function TradeCard({ trade }) {
     partialClose, undoPartial, moveStopToBreakeven, moneyOf, settings,
   } = useApp();
 
-  const origin = isBacktest(trade) ? " · Bot backtest" : trade.alertId ? " · From scanner alert" : "";
+  const origin = isBacktest(trade)
+    ? " · Bot backtest"
+    : trade.source === "bot"
+    ? " · TradeMind bot (auto)"
+    : trade.source === "mt5"
+    ? " · Imported from MT5"
+    : trade.alertId
+    ? " · From scanner alert"
+    : "";
   const partials = trade.partials || [];
   const remaining = remainingPercent(trade);
   const money = moneyOf(trade);
@@ -78,6 +91,15 @@ export default function TradeCard({ trade }) {
         <View style={styles.photoRow}>
           {trade.photos.map((uri) => (
             <Image key={uri} source={{ uri }} style={styles.thumb} />
+          ))}
+        </View>
+      )}
+      {[trade.chartBefore, trade.chartAfter].some(isChartImage) && (
+        <View style={styles.photoRow}>
+          {[trade.chartBefore, trade.chartAfter].filter(isChartImage).map((uri) => (
+            <TouchableOpacity key={uri} onPress={() => openLink(uri)}>
+              <Image source={{ uri }} style={[styles.thumb, { width: 150, height: 85 }]} resizeMode="cover" />
+            </TouchableOpacity>
           ))}
         </View>
       )}
