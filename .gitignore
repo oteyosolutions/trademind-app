@@ -13,3 +13,10 @@ web-build/
 *-firebase-adminsdk-*.json
 .env
 .env.*
+config.py
+signals/
+settings.json
+logs/
+charts/
+data/
+__pycache__/
